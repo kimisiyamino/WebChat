@@ -19,32 +19,36 @@ public class MainServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        //HttpSession session = request.getSession();
         response.setContentType("text/html");
         //System.out.println("\"MainServlet\"\nURL: " + request.getRequestURI() + "\n" + LocalDateTime.now() + "\n" + request.getLocalAddr() + "\n" + request.getRequestedSessionId() + "\n");
 
+        DataBase.users.size();
         getServletContext().getRequestDispatcher("/testpage.jsp").forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        //System.out.println("ChatServlet doPost");
+
+        String nickname = request.getParameter("nickname");
+        System.out.println("MainServlet doPost: " + nickname);
+        // Тут проверяем данные пользователя, его ник
+        //
+        //
+        //
+        //
 
 
-
-        String s = request.getParameter("nickname");
-        System.out.println("MainServlet doPost: " + s);
-
-        User user = new User(s);
+        User user = new User(nickname);
 
         if (!DataBase.users.contains(user)) {
             DataBase.addUser(user);
+        }else{
+            user = DataBase.getUserByNickname(nickname);
         }
 
-        request.getSession().setAttribute("nickname", s);
+        request.getSession().setAttribute("nickname", user.getNickname());
+        request.getSession().setAttribute("userImagePath", user.getImagePath());
         request.getSession().setAttribute("user", user);
-        request.getSession().setAttribute("userSessiom", request.getSession().getId());
-
         response.sendRedirect(request.getContextPath() + "/chat");
     }
 }

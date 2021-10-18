@@ -33,37 +33,43 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class ChatSocket{
 
     private Session session;
-    User user;
+    private User user;
 
-    private static Set<ChatSocket> chatEndpoints = new CopyOnWriteArraySet<>();
-    private static HashMap<String, String> users = new HashMap<>();
+  //  private static Set<ChatSocket> chatEndpoints = new CopyOnWriteArraySet<>();
+  //  private static HashMap<String, String> users = new HashMap<>();
 
-    private static Set<Session> userSessions = Collections.newSetFromMap(new ConcurrentHashMap<Session, Boolean>());
+    private static final Set<Session> userSessions = Collections.newSetFromMap(new ConcurrentHashMap<Session, Boolean>());
 
     @OnOpen
     public void onOpen(Session session, @PathParam("username") String username) throws IOException {
-        System.out.println("onOpen");
-        userSessions.add(session);
         this.session = session;
-
+        userSessions.add(session);
         user = DataBase.getUserByNickname(username);
 
+        // Загрузка истории сообщений
+        for(Message _message : DataBase.messages) {
+            System.out.println(_message);
 
-        String send = "";
-
-       /* for(Message m : DataBase.messages) {
-
-            System.out.println("сУУУУКАААА " + DataBase.messages.size() + " " + m.message);
-
-            if (m.nick.equals(username)) {
-                send = "<div class=\"d-flex justify-content-end mb-4\"><div class=\"msg_cotainer_send\">" + m.message + "<span class=\"msg_time_send\">" + m.time + "</br>" + m.nick + "</span></div><div class=\"img_cont_msg\"><img src=\"https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg\" class=\"rounded-circle user_img_msg\"></div></div>";
-            } else {
-                send = "<div class=\"d-flex justify-content-start mb-4\"><div class=\"img_cont_msg\"><img src=\"https://static.turbosquid.com/Preview/001214/650/2V/boy-cartoon-3D-model_D.jpg\" class=\"rounded-circle user_img_msg\" alt=\"\"></div><div class=\"msg_cotainer\">" + m.message + "<span class=\"msg_time\">" + m.time + "</br>" + m.nick + "</span></div></div>";
+            try {
+                session.getAsyncRemote().sendText(new MessageEncoder().encode(_message));
+            } catch (EncodeException e) {
+                e.printStackTrace();
             }
+        }
 
-            session.getAsyncRemote().sendText(send);
-
-        }*/
+        // Оповещение о подключении нового user в чат
+        // Создаем сообщение формата: Nick 12:00:00 message
+        Message message_ = new Message("notification", LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")), (user.getNickname() + " connected"));
+        // Сохраняем сообщенние в историю
+        DataBase.addMessage(message_);
+        // Отправляем всем на сервере
+        for(Session _session : userSessions) {
+            try {
+                _session.getAsyncRemote().sendText(new MessageEncoder().encode(message_));
+            } catch (EncodeException e) {
+                e.printStackTrace();
+            }
+        }
 
        /* chatEndpoints.add(this);
 s
@@ -80,44 +86,24 @@ s
     }
 
     @OnMessage
-    public void onMessage(Session session, String message) throws IOException {
-        //System.out.println(session.getId() + " зашел в onMessage");
-        //System.out.println(session.getId() + " прислал сообщение: " + message);
-
-        String send = "";
-
-
-
-        Message message_ = new Message();
-        message_.message = message;
-        message_.time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-        message_.nick =  user.getNickname();
+    public void onMessage(Session session, String message) {
+        // Создаем сообщение формата: Nick 12:00:00 message
+        Message message_ = new Message(user.getNickname(), LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")), message);
+        message_.setUserImagePath(user.getImagePath());
+        // Сохраняем сообщенние в историю
         DataBase.addMessage(message_);
-
+        // Отправляем всем на сервере
         for(Session _session : userSessions) {
-            if(this.session.equals(_session)){
-                send = "<div class=\"d-flex justify-content-end mb-4\"><div class=\"msg_cotainer_send\">" + message + "<span class=\"msg_time_send\">" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")) + "</br>" + user.getNickname() + "</span></div><div class=\"img_cont_msg\"><img src=\"https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg\" class=\"rounded-circle user_img_msg\"></div></div>";
-            }else{
-                send = "<div class=\"d-flex justify-content-start mb-4\"><div class=\"img_cont_msg\"><img src=\"https://static.turbosquid.com/Preview/001214/650/2V/boy-cartoon-3D-model_D.jpg\" class=\"rounded-circle user_img_msg\" alt=\"\"></div><div class=\"msg_cotainer\">" + message + "<span class=\"msg_time\">" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")) + "</br>" + user.getNickname() + "</span></div></div>";
+            try {
+                _session.getAsyncRemote().sendText(new MessageEncoder().encode(message_));
+            } catch (EncodeException e) {
+                e.printStackTrace();
             }
-
-            System.out.println(session.getId() + " отправляет " + _session.getId() + " sms: " + send);
-
-            _session.getAsyncRemote().sendText(send);
         }
-     //   message.setFrom(users.get(session.getId()));
-
-      /*  try {
-            broadcast(message);
-        } catch (EncodeException e) {
-            e.printStackTrace();
-        }*/
     }
 
     @OnClose
     public void onClose(Session session) throws IOException {
-        System.out.println("onClose");
-
         userSessions.remove(session);
 
      /*   chatEndpoints.remove(this);
@@ -149,34 +135,4 @@ s
             }
         });
     }*/
-
-
-  //  @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
-        System.out.println("Servlet: \"" + getClass().getSimpleName() + "\"\nURL: " + request.getRequestURI() + "\nTime: " + LocalDateTime.now() + "\nlocal/remote/localName: " + request.getLocalAddr() + " " + request.getRemoteAddr() + " " + request.getLocalName() + "\nSession: " + request.getRequestedSessionId());
-        System.out.println("    Headers: ");
-        Enumeration<String> headers = request.getHeaderNames();
-        while (headers.hasMoreElements()){
-           String header = headers.nextElement();
-           /* if(header.equals("user-agent")){
-                System.out.println("Browser: " + request.getHeader(header));
-            }else if(header.equals("host")){
-                System.out.println("host: " + request.getHeader(header));
-            }else if(header.equals("connection")){
-                System.out.println("connection: " + request.getHeader(header));
-            }*/
-
-            System.out.println(header + ": " + request.getHeader(header));
-        }
-
-
-
-       // getServletContext().getRequestDispatcher("/chat.jsp").forward(request, response);
-    }
-
-  //  @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
-    }
 }

@@ -31,30 +31,39 @@
 		<!-- Веб сокет соединение -->
 		<script type="text/javascript">
 
-			var wsUrl;
+			let wsUrl;
 			if (window.location.protocol === 'http:') {
 				wsUrl = 'ws://';
 			} else {
 				wsUrl = 'wss://';
 			}
-			var ws = new WebSocket(wsUrl + window.location.host + "/chat/" + "<%=session.getAttribute("nickname")%>");
+			const ws = new WebSocket(wsUrl + window.location.host + "/chat/" + "<%=session.getAttribute("nickname")%>");
 
 			ws.onmessage = function(event) {
+				// Тут HTML код чпанели чата
+				const chatPanel = document.getElementById("chat");
+				// Парсим message
+				const message = JSON.parse(event.data);
 
-				console.log(event);
+				// Тут еще реализовать логику с автаром
+				let send;
+				if(message.nick === ("<%=session.getAttribute("nickname")%>")){
+					send = "<div class=\"d-flex justify-content-end mb-4\"><div class=\"msg_cotainer_send\">" + message.message + "<span class=\"msg_time_send\">" + message.time + "</br>" + message.nick + "</span></div><div class=\"img_cont_msg\"><img src=\""+ message.userImagePath + "\" class=\"rounded-circle user_img_msg\"></div></div>";
+				}else if(message.nick === "notification"){
+					send = "<div class=\"d-flex justify-content-center mb-4\"><div class=\"msg_cotainer\">" + message.message + "<span class=\"msg_time_send\">" + message.time + "</br>" + "</div></div>";
+				}else{
+					send = "<div class=\"d-flex justify-content-start mb-4\"><div class=\"img_cont_msg\"><img src=\""+ message.userImagePath + "\" class=\"rounded-circle user_img_msg\" alt=\"\"></div><div class=\"msg_cotainer\">" + message.message + "<span class=\"msg_time\">" + message.time + "</br>" + message.nick + "</span></div></div>";
+				}
 
-				var mySpan = document.getElementById("chat");
-
-				console.log(mySpan);
-
-				mySpan.innerHTML+=event.data+"<br/>";
+				chatPanel.innerHTML+=send;
 			};
 
 			ws.onerror = function(event){
 				console.log("Error ", event)
 			}
+
 			function sendMsg() {
-				var msg = document.getElementById("msg").value;
+				const msg = document.getElementById("msg").value;
 				if(msg)
 				{
 					ws.send(msg);
@@ -83,15 +92,12 @@
 							<div class="d-flex bd-highlight">
 								
 								<div class="img_cont">
-									<img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img">
-								
+									<img src="<%=session.getAttribute("userImagePath")%>" class="rounded-circle user_img">
 								</div>
-
 								<div class="user_info">
 									<span><%=session.getAttribute("nickname")%></span>
-									<p>Nickname, 27</p>
+									<p><%=session.getAttribute("nickname")%>, 0</p>
 								</div>
-								
 							</div>
 							
 							<!-- Кнопка -->

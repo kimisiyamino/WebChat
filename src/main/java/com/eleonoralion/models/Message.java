@@ -1,39 +1,60 @@
 package com.eleonoralion.models;
 
 public class Message {
-    private String from;
-    private String to;
+    private String nick;
+    private String time;
+    private String message;
 
-    public String message;
-    public String time;
-    public String nick;
+    private String userImagePath;
 
-
-    public String getFrom() {
-        return from;
+    public Message() {
     }
 
-    public void setFrom(String from) {
-        this.from = from;
+    public Message(String nick, String time, String message) {
+        this.nick = nick;
+        this.time = time;
+        this.message = message;
     }
 
-    public String getTo() {
-        return to;
+    public String getMessage() {
+        return message;
     }
 
-    public void setTo(String to) {
-        this.to = to;
+    public void setMessage(String message) {
+        this.message = message;
     }
 
-    public String getContent() {
-        return content;
+    public String getTime() {
+        return time;
     }
 
-    public void setContent(String content) {
-        this.content = content;
+    public void setTime(String time) {
+        this.time = time;
     }
 
-    private String content;
+    public String getNick() {
+        return nick;
+    }
 
-    //standard constructors, getters, setters
+    public void setNick(String nick) {
+        this.nick = nick;
+    }
+
+    public String getUserImagePath() {
+        return userImagePath;
+    }
+
+    public void setUserImagePath(String userImagePath) {
+        this.userImagePath = userImagePath;
+    }
+
+    @Override
+    public String toString() {
+        return "Message{" +
+                "nick='" + nick + '\'' +
+                ", time='" + time + '\'' +
+                ", message='" + message + '\'' +
+                ", userImagePath='" + userImagePath + '\'' +
+                '}';
+    }
 }
