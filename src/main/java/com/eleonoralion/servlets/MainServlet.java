@@ -22,7 +22,8 @@ public class MainServlet extends HttpServlet {
         response.setContentType("text/html");
         //System.out.println("\"MainServlet\"\nURL: " + request.getRequestURI() + "\n" + LocalDateTime.now() + "\n" + request.getLocalAddr() + "\n" + request.getRequestedSessionId() + "\n");
 
-        DataBase.users.size();
+        DataBase.start();
+
         getServletContext().getRequestDispatcher("/testpage.jsp").forward(request, response);
     }
 
@@ -30,13 +31,12 @@ public class MainServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
         String nickname = request.getParameter("nickname");
-        System.out.println("MainServlet doPost: " + nickname);
+
         // Тут проверяем данные пользователя, его ник
         //
         //
         //
         //
-
 
         User user = new User(nickname);
 

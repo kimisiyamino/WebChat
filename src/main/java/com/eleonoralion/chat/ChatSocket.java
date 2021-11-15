@@ -106,6 +106,22 @@ s
     public void onClose(Session session) throws IOException {
         userSessions.remove(session);
 
+        // Оповещение об отключении нового user в чат
+        // Создаем сообщение формата: Nick 12:00:00 message
+        Message message_ = new Message("notification", LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")), (user.getNickname() + " disconnected"));
+        // Сохраняем сообщенние в историю
+        DataBase.addMessage(message_);
+        // Отправляем всем на сервере
+        for(Session _session : userSessions) {
+            try {
+                _session.getAsyncRemote().sendText(new MessageEncoder().encode(message_));
+            } catch (EncodeException e) {
+                e.printStackTrace();
+            }
+        }
+
+        session.close();
+
      /*   chatEndpoints.remove(this);
         Message message = new Message();
         message.setFrom(users.get(session.getId()));
